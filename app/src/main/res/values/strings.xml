@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Battery Charged Alarm</string>
+    <string name="set_reminder_percentage">Set Reminder Percentage</string>
+    <string name="percentage">Percentage</string>
+    <string name="dashboard_greetings">Hi there, Please mention the charged percentage at which you want the alarm to be triggered!</string>
+    <string name="textfield_error_message">Please enter only digits, greater than 0 and less than or equal to 100</string>
+    <string name="save">Save</string>
+    <string name="saved_successfully">Saved Successfully</string>
 </resources>

@@ -111,4 +111,8 @@ dependencies {
 
     //DataStore
     implementation "androidx.datastore:datastore-preferences:1.0.0"
+
+    //Accompanist Permissions
+    implementation "com.google.accompanist:accompanist-permissions:0.26.5-rc"
+
 }

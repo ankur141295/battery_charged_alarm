@@ -1,5 +1,10 @@
 package com.ankur_anand.battery_charged_alarm.ui.dashboard
 
+import android.Manifest
+import android.app.ActivityManager
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -31,11 +36,21 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startForegroundService
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.ankur_anand.battery_charged_alarm.R
+import com.ankur_anand.battery_charged_alarm.service.BatteryMonitorForegroundService
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionStatus
+import com.google.accompanist.permissions.rememberPermissionState
+import timber.log.Timber
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
+
+@OptIn(
+    ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class,
+    ExperimentalPermissionsApi::class
+)
 @Composable
 fun DashboardScreen(
     navController: NavHostController,
@@ -49,19 +64,36 @@ fun DashboardScreen(
     val percentageText = viewModel.percentageText
     val isPercentageTextFieldError = viewModel.isPercentageTextFieldError
 
-    val onValueChanged: (TextFieldValue) -> Unit = {
-        viewModel.setTextAndValidate(it)
-    }
 
-    val onDonePressed: () -> Unit = {
-        keyboardController?.hide()
-        viewModel.savePercentage()
-    }
 
     if (viewModel.showSuccessToast.value) {
         Toast.makeText(context, context.getString(R.string.saved_successfully), Toast.LENGTH_LONG)
             .show()
+        startService(context = context)
         viewModel.resetToastValue(false)
+    }
+
+    val notificationPermissionState =
+        rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS)
+
+    val onDonePressed: () -> Unit = {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when (notificationPermissionState.status) {
+                is PermissionStatus.Denied -> {
+
+                }
+
+                PermissionStatus.Granted -> {
+                    keyboardController?.hide()
+                    viewModel.savePercentage()
+                }
+            }
+            notificationPermissionState.launchPermissionRequest()
+        } else {
+            keyboardController?.hide()
+            viewModel.savePercentage()
+        }
+
     }
 
 
@@ -77,13 +109,14 @@ fun DashboardScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = stringResource(R.string.dashboard_greetings))
+
+            GreetingText()
 
             Spacer(modifier = Modifier.height(20.dp))
 
             PercentageTextField(
                 value = percentageText.value,
-                onValueChanged = onValueChanged,
+                onValueChanged = viewModel::setTextAndValidate,
                 onDonePressed = onDonePressed,
                 isError = isPercentageTextFieldError.value
             )
@@ -98,6 +131,11 @@ fun DashboardScreen(
 
         }
     }
+}
+
+@Composable
+fun GreetingText() {
+    Text(text = stringResource(R.string.dashboard_greetings))
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -136,6 +174,7 @@ fun PercentageTextField(
             ),
             isError = isError
         )
+
         AnimatedVisibility(visible = isError) {
             Text(
                 modifier = Modifier.padding(
@@ -168,6 +207,30 @@ fun ColumnScope.SaveButton(
             text = buttonText
         )
     }
+}
+
+private fun startService(context: Context) {
+    if (!isServiceRunning(context)) {
+        val intentService = Intent(context, BatteryMonitorForegroundService::class.java)
+        startForegroundService(context, intentService)
+    }
+}
+
+private fun isServiceRunning(context: Context): Boolean {
+    try {
+        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+
+        for (service: ActivityManager.RunningServiceInfo in activityManager.getRunningServices(Int.MAX_VALUE)) {
+            if (BatteryMonitorForegroundService::class.simpleName?.equals(service.service.className) == true) {
+                return true
+            }
+        }
+    } catch (e: SecurityException) {
+        Timber.e(e)
+        return false
+    }
+
+    return false
 }
 
 

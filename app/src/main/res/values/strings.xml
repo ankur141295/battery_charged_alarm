@@ -6,4 +6,11 @@
     <string name="textfield_error_message">Please enter only digits, greater than 0 and less than or equal to 100</string>
     <string name="save">Save</string>
     <string name="saved_successfully">Saved Successfully</string>
+    <string name="general_channel_id">General_Id</string>
+    <string name="general_channel_name">General</string>
+    <string name="general_channel_description">This channel is used for showing system services</string>
+    <string name="alert_channel_id">Alert_Id</string>
+    <string name="alert_channel_name">Alert</string>
+    <string name="alert_channel_description">This channel is used for showing alert messages</string>
+    <string name="battery_charged_alarm_is_running">Battery Charged Alarm is running</string>
 </resources>
